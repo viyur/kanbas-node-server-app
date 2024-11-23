@@ -60,6 +60,7 @@ export default function UserRoutes(app) {
 
     const signout = (req, res) => {
         req.session.destroy();
+
         res.sendStatus(200);
     };
 
@@ -80,20 +81,55 @@ export default function UserRoutes(app) {
         res.json(newCourse);
     };
 
+    // const findEnrollmentsForUser = (req, res) => {
+    //     let { userId } = req.params;
+    //     if (userId === "current") {
+    //         const currentUser = req.session["currentUser"];
+    //         if (!currentUser) {
+    //             res.sendStatus(401);
+    //             return;
+    //         }
+    //         userId = currentUser._id;
+    //     }
+    //     console.log("findEnrollmentsForUser is good? ", req.session["currentUser"]);
+    //     const enrollments = enrollmentsDao.findEnrollmentsForUser(userId);
+    //     res.json(enrollments);
+    // };
     const findEnrollmentsForUser = (req, res) => {
-        let { userId } = req.params;
-        if (userId === "current") {
-            const currentUser = req.session["currentUser"];
-            req.session["currentUser"] = currentUser;
+        const { userId: paramUserId } = req.params;
+
+        // Resolve userId from session if "current" is specified
+        let userId = paramUserId;
+        if (paramUserId === "current") {
+            const currentUser = req.session?.currentUser;
             if (!currentUser) {
-                res.sendStatus(401);
-                return;
+                console.error("Unauthorized: No user is logged in");
+                return res.status(401).json({ error: "Unauthorized: Please log in" });
             }
-            userId = currentUser._id;
+            userId = currentUser._id; // Set userId to the logged-in user's ID
         }
-        console.log("findEnrollmentsForUser is good? ", req.session["currentUser"]);
-        const enrollments = enrollmentsDao.findEnrollmentsForUser(userId);
-        res.json(enrollments);
+
+        // Validate userId
+        if (!userId) {
+            console.error("Bad Request: Missing userId in request params or session");
+            return res.status(400).json({ error: "Bad Request: User ID is required" });
+        }
+
+        try {
+            console.log("Fetching enrollments for user:", userId);
+            const enrollments = enrollmentsDao.findEnrollmentsForUser(userId);
+
+            if (!enrollments || enrollments.length === 0) {
+                console.warn(`No enrollments found for user ID: ${userId}`);
+                return res.status(404).json({ message: "No enrollments found" });
+            }
+
+            console.log(`Found ${enrollments.length} enrollments for user ID: ${userId}`);
+            return res.json(enrollments);
+        } catch (error) {
+            console.error("Failed to retrieve enrollments:", error);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
     };
 
     // const addEnrollmentForUser = (req, res) => {
