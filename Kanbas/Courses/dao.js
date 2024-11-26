@@ -1,6 +1,6 @@
-import Database from "../Database/index.js";
-export function findAllCourses() {
-    return Database.courses;
+import model from "./model.js";
+export async function findAllCourses() {
+    return await model.find();
 }
 
 export function findCoursesForEnrolledUser(userId) {
@@ -10,11 +10,13 @@ export function findCoursesForEnrolledUser(userId) {
     return enrolledCourses;
 }
 
-export function createCourse(course) {
-    const newCourse = { ...course, _id: Date.now().toString() };
-    Database.courses = [...Database.courses, newCourse];
-    return newCourse;
-} // Enrollments should update as well
+export async function createCourse(course) {
+    delete course._id;
+    return await model.create(course);
+    // const newCourse = { ...course, _id: Date.now().toString() };
+    // Database.courses = [...Database.courses, newCourse];
+    // return newCourse;
+}    // Enrollments should update as well
 
 export function deleteCourse(courseId) {
     const { courses, enrollments } = Database;
