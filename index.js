@@ -17,7 +17,9 @@ import AssignmentRoutes from './Kanbas/Assignments/routes.js';
 
 const CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kanbas-cs5610-fa2024";
 mongoose.connect(CONNECTION_STRING);
+
 const app = express();
+// CORS
 app.use(
     cors({
         credentials: true,
@@ -25,12 +27,14 @@ app.use(
     })
 );
 
+// Session Options
 const sessionOptions = {
     secret: process.env.SESSION_SECRET || "kanbas",
     resave: false,
     saveUninitialized: false
 };
 
+// Production Mode Setting
 if (process.env.NODE_ENV !== "development") {
     sessionOptions.proxy = true;
     sessionOptions.cookie = {
