@@ -48,10 +48,7 @@ app.use(
     session(sessionOptions)
 );
 
-// app.use((req, res, next) => {
-//     console.log("Session before route:", req.session); // 检查 session 数据
-//     next();
-// });
+
 
 
 // Lab routes

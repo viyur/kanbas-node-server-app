@@ -157,23 +157,51 @@ export default function CourseRoutes(app) {
     });
 
 
-
     // get assignments for a course
-    app.get("/api/courses/:courseId/assignments", (req, res) => {
-        const { courseId } = req.params;
-        const assignments = assignmentsDao.findAssignmentsForModule(courseId);
-        res.json(assignments);
+    app.get("/api/courses/:courseId/assignments", async (req, res) => {
+        try {
+            const { courseId } = req.params;
+            // Validate courseId
+            if (!courseId || typeof courseId !== "string") {
+                return res.status(400).json({ error: "Invalid or missing courseId when retrieving assignments." });
+            }
+            // Retrieve assignments for the course
+            const assignments = await assignmentsDao.findAssignmentsForCourse(courseId);
+            // Check if assignments exist
+            if (!assignments || assignments.length === 0) {
+                return res.status(404).json({ error: "No assignments found for the specified course." });
+            }
+            // Return assignments
+            res.status(200).json(assignments);
+        } catch (error) {
+            console.error("Error retrieving assignments:", error.message);
+            res.status(500).json({ error: "An internal server error occurred. Please try again later." });
+        }
     });
 
     // create a new assignment for course
-    app.post("/api/courses/:courseId/assignments", (req, res) => {
-        const { courseId } = req.params;
-        const assignment = {
-            ...req.body,
-            course: courseId,
-        };
-        const newAssignment = assignmentsDao.createAssignment(assignment);
-        res.send(newAssignment);
-    })
+    app.post("/api/courses/:courseId/assignments", async (req, res) => {
+        try {
+            const { courseId } = req.params; // Extract courseId from the route
+            const assignmentData = req.body; // Get assignment data from the request body
+
+            // Validate the courseId and assignmentData
+            if (!courseId || typeof courseId !== "string") {
+                return res.status(400).json({ error: "Invalid or missing courseId when creating assignment." });
+            }
+            if (!assignmentData || !assignmentData.title) { // Example validation
+                return res.status(400).json({ error: "Invalid or missing assignment data." });
+            }
+            // Add the courseId to the assignment data
+            assignmentData.course = courseId;
+            // Create the assignment using the DAO function
+            const newAssignment = await assignmentsDao.createAssignment(assignmentData);
+            // Respond with the created assignment
+            res.status(201).json(newAssignment);
+        } catch (error) {
+            console.error("Error creating assignment:", error.message);
+            res.status(500).json({ error: "An internal server error occurred. Please try again later." });
+        }
+    });
 
 }
