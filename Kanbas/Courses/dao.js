@@ -28,5 +28,10 @@ export async function updateCourse(courseId, courseUpdates) {
     return await model.updateOne({ _id: courseId }, courseUpdates);
 }
 
+// find a course by id
+export async function findCourseById(courseId) {
+    return await model.findOne({ _id: courseId });
+}
+
 
 

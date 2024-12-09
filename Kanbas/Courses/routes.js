@@ -2,6 +2,7 @@ import * as dao from "./dao.js";
 import * as modulesDao from "../Modules/dao.js";
 import * as assignmentsDao from "../Assignments/dao.js";
 import * as enrollmentsDao from "../Enrollments/dao.js";
+import * as quizzesDao from "../Quizzes/dao.js";
 
 export default function CourseRoutes(app) {
     // get all courses
@@ -201,6 +202,58 @@ export default function CourseRoutes(app) {
         } catch (error) {
             console.error("Error creating assignment:", error.message);
             res.status(500).json({ error: "An internal server error occurred. Please try again later." });
+        }
+    });
+
+
+    // Create a new quiz for a course
+    app.post("/api/courses/:courseId/quizzes", async (req, res) => {
+        const { courseId } = req.params;
+        const quizData = req.body;
+
+        try {
+
+            const course = await dao.findCourseById(courseId);
+            if (!course) {
+                return res.status(404).send({ error: "Course not found" });
+            }
+
+            //  pass the `courseId` to the data
+            const quizToCreate = { ...quizData, course: courseId };
+
+            // create a new quiz using the quizzesDao
+            const newQuiz = await quizzesDao.createQuiz(quizToCreate);
+
+            // return the new quiz
+            res.status(201).send(newQuiz);
+        } catch (error) {
+            console.error("Error creating quiz:", error);
+
+            // Handle specific known errors
+            if (error.name === "ValidationError") {
+                return res.status(400).send({ error: "Invalid quiz data when adding new quiz", details: error.errors });
+            }
+
+            res.status(500).send({ error: "Failed to create new quiz" });
+        }
+    });
+
+    // Get all quizzes for a course
+    app.get("/api/courses/:courseId/quizzes", async (req, res) => {
+        const { courseId } = req.params;
+
+        // Validate courseId
+        if (!courseId || typeof courseId !== "string") {
+            return res.status(400).send({ error: "Invalid or missing courseId when retrieving quizzes." });
+        }
+
+        try {
+            // Fetch quizzes for the specified course
+            const quizzes = await quizzesDao.findQuizzesByCourse(courseId);
+            res.status(200).send(quizzes);
+        } catch (error) {
+            console.error("Error fetching quizzes for course:", error);
+            res.status(500).send({ error: "Failed to fetch quizzes for the course" });
         }
     });
 
