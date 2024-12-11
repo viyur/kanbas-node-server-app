@@ -9,10 +9,10 @@ const questionSchema = new mongoose.Schema(
         title: { type: String, default: "Default new question title", required: true },
 
         // Points assigned to the question
-        points: { type: Number, default: 0, required: true },
+        points: { type: Number, default: 0 },
 
         // Question text (supports WYSIWYG)
-        question: { type: String, default: "", required: true },
+        question: { type: String, default: "" },
 
         // Type of the question
         questionType: {
@@ -31,7 +31,7 @@ const questionSchema = new mongoose.Schema(
                 },
             ],
             default: [],
-            required: true,
+
         },
 
         // Answers for Fill in the blank questions
@@ -39,15 +39,36 @@ const questionSchema = new mongoose.Schema(
             type: [
                 {
                     text: { type: String, default: "", required: true }, // Possible correct answer
-                    caseInsensitive: { type: Boolean, required: true, default: true }, // Indicates if the answer is case-insensitive
+                    caseInsensitive: { type: Boolean, default: true }, // Indicates if the answer is case-insensitive
                 },
-            ], default: [], required: true
+            ], default: []
         },
 
         // Answer for True/false questions
-        trueFalseAnswer: { type: Boolean, default: false, required: true }, // True or False value
+        trueFalseAnswer: { type: Boolean, default: false }, // True or False value
     },
-    { timestamps: true, collection: "questions" }
+    {
+        timestamps: true, // Automatically adds `createdAt` and `updatedAt` fields
+        collection: "questions", // Name of the MongoDB collection
+        toJSON: { virtuals: true }, // Include virtuals when converting to JSON
+        toObject: { virtuals: true }, // Include virtuals when converting to a plain object
+    }
 );
+
+questionSchema.virtual("correctAnswer").get(function () {
+    switch (this.questionType) {
+        case "Multiple Choice":
+            return (this.choices || [])
+                .filter((choice) => choice.isCorrect)
+                .map((choice) => choice.text);
+        case "Fill in the blank":
+            return (this.blankAnswers || []).map((answer) => answer.text);
+        case "True/false":
+            return this.trueFalseAnswer;
+        default:
+            return [];
+    }
+});
+
 
 export default questionSchema;

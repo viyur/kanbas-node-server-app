@@ -91,9 +91,9 @@ export default function quizRoutes(app) {
         }
 
         // Validate required fields in the question body
-        if (!question.title || !question.points || !question.question) {
+        if (!question.title || !question.question) {
             return res.status(400).send({
-                error: "Question must include title, points, and question text.",
+                error: "Question must include title and question text.",
             });
         }
 
